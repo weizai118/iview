@@ -174,7 +174,10 @@ const RANGE_PARSER = function(text, format) {
         const range1 = array[0];
         const range2 = array[1];
 
-        return [parseDate(range1, format), parseDate(range2, format)];
+        return [
+            range1 instanceof Date ? range1 : parseDate(range1, format),
+            range2 instanceof Date ? range2 : parseDate(range2, format),
+        ];
     }
     return [];
 };
@@ -226,7 +229,15 @@ export const TYPE_VALUE_RESOLVER_MAP = {
         formatter: (value, format) => {
             return value.filter(Boolean).map(date => formatDate(date, format)).join(',');
         },
-        parser: (text, format) => text.split(',').map(string => parseDate(string.trim(), format))
+        parser: (value, format) => {
+            const values = typeof value === 'string' ? value.split(',') : value;
+            return values.map(value => {
+                if (value instanceof Date) return value;
+                if (typeof value === 'string') value = value.trim();
+                else if (typeof value !== 'number' && !value) value = '';
+                return parseDate(value, format);
+            });
+        }
     },
     number: {
         formatter(value) {
